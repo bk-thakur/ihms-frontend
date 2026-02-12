@@ -88,7 +88,7 @@ pipeline {
     stage('Update Helm Repo') {
       steps {
         sh '''
-        git clone https://github.com/org/ihms-deploy.git
+        git clone https://github.com/bk-thakur/ihms-deploy.git
         cd ihms-deploy/environments/dev
         sed -i "s/tag:.*/tag: $BUILD_NUMBER/" values.yaml
         git commit -am "Updated image to $BUILD_NUMBER"
