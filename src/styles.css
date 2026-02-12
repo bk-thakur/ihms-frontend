@@ -1,0 +1,38 @@
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+}
+
+.navbar {
+  background: #0a3d62;
+  padding: 15px;
+  color: white;
+  display: flex;
+  justify-content: space-between;
+}
+
+.navbar a {
+  color: white;
+  margin: 0 10px;
+  text-decoration: none;
+}
+
+.container {
+  padding: 40px;
+  text-align: center;
+}
+
+.btn {
+  padding: 10px 20px;
+  background: #1e90ff;
+  color: white;
+  border: none;
+  cursor: pointer;
+}
+
+.footer {
+  background: #0a3d62;
+  color: white;
+  padding: 20px;
+  text-align: center;
+}
