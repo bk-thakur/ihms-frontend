@@ -6,6 +6,7 @@ pipeline {
     ACCOUNT_ID = "123456789012"
     IMAGE_NAME = "ihms-frontend"
     ECR = "${ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
+    SONAR_TOKEN = credentials('sonar-token')
   }
 
   stages {
@@ -13,7 +14,7 @@ pipeline {
     stage('Checkout') {
       steps {
         git branch: 'main',
-        url: 'https://github.com/your-org/ihms-frontend-app.git'
+        url: 'https://github.com/org/ihms-frontend-app.git'
       }
     }
 
@@ -31,9 +32,21 @@ pipeline {
 
     stage('SonarQube Scan') {
       steps {
-        sh '''
-        sonar-scanner         -Dsonar.projectKey=ihms-frontend         -Dsonar.sources=src         -Dsonar.host.url=http://YOUR-SONAR-IP:9000         -Dsonar.login=YOUR_SONAR_TOKEN
-        '''
+        sh """
+        sonar-scanner \
+        -Dsonar.projectKey=ihms-frontend \
+        -Dsonar.sources=src \
+        -Dsonar.host.url=http://<SONAR-IP>:9000 \
+        -Dsonar.login=$SONAR_TOKEN
+        """
+      }
+    }
+
+    stage('Quality Gate Check') {
+      steps {
+        timeout(time: 2, unit: 'MINUTES') {
+          waitForQualityGate abortPipeline: true
+        }
       }
     }
 
@@ -45,14 +58,18 @@ pipeline {
 
     stage('Trivy Scan Image') {
       steps {
-        sh 'trivy image --exit-code 1 --severity HIGH,CRITICAL $IMAGE_NAME:$BUILD_NUMBER'
+        sh '''
+        trivy image --exit-code 1 --severity HIGH,CRITICAL \
+        $IMAGE_NAME:$BUILD_NUMBER
+        '''
       }
     }
 
     stage('Login to ECR') {
       steps {
         sh '''
-        aws ecr get-login-password --region $AWS_REGION         | docker login --username AWS --password-stdin $ECR
+        aws ecr get-login-password --region $AWS_REGION \
+        | docker login --username AWS --password-stdin $ECR
         '''
       }
     }
@@ -60,11 +77,25 @@ pipeline {
     stage('Push to ECR') {
       steps {
         sh '''
-        docker tag $IMAGE_NAME:$BUILD_NUMBER         $ECR/$IMAGE_NAME:$BUILD_NUMBER
+        docker tag $IMAGE_NAME:$BUILD_NUMBER \
+        $ECR/$IMAGE_NAME:$BUILD_NUMBER
 
         docker push $ECR/$IMAGE_NAME:$BUILD_NUMBER
         '''
       }
     }
+
+    stage('Update Helm Repo') {
+      steps {
+        sh '''
+        git clone https://github.com/org/ihms-deploy.git
+        cd ihms-deploy/environments/dev
+        sed -i "s/tag:.*/tag: $BUILD_NUMBER/" values.yaml
+        git commit -am "Updated image to $BUILD_NUMBER"
+        git push
+        '''
+      }
+    }
   }
 }
+
