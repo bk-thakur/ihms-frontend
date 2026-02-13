@@ -38,8 +38,6 @@ pipeline {
           sonar-scanner \
           -Dsonar.projectKey=ihms-frontend \
           -Dsonar.sources=src \
-          -Dsonar.host.url=${SONAR_HOST} \
-          -Dsonar.login=$SONAR_AUTH_TOKEN
           """
         }
       }
