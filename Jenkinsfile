@@ -11,6 +11,7 @@ pipeline {
   }
   tools {
     sonarQubeScanner 'SonarScanner'
+  }
 
   stages {
 
