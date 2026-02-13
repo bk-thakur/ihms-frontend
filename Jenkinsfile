@@ -1,20 +1,21 @@
 pipeline {
   agent any
-  
+
   environment {
     AWS_REGION = "ap-south-1"
     ACCOUNT_ID = "331760067638"
     IMAGE_NAME = "ihms-frontend"
+    IMAGE_TAG  = "${BUILD_NUMBER}"
     ECR = "${ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
-    SONAR_HOST = "http://172.31.13.153 :9000"
     TRIVY_SERVER = "172.31.13.153"
   }
+
   stages {
 
     stage('Checkout') {
       steps {
         git branch: 'main',
-        url: 'https://github.com/bk-thakur/ihms-frontend.git'
+            url: 'https://github.com/bk-thakur/ihms-frontend.git'
       }
     }
 
@@ -34,9 +35,9 @@ pipeline {
       steps {
         withSonarQubeEnv('SonarQube-Server') {
           sh """
-          /opt/sonar-scanner/bin/sonar-scanner \
-          -Dsonar.projectKey=ihms-frontend \
-          -Dsonar.sources=src \
+            /opt/sonar-scanner/bin/sonar-scanner \
+            -Dsonar.projectKey=ihms-frontend \
+            -Dsonar.sources=src
           """
         }
       }
@@ -52,74 +53,76 @@ pipeline {
 
     stage('Docker Build') {
       steps {
-        sh 'docker build -t $IMAGE_NAME:$BUILD_NUMBER .'
+        sh """
+          docker build -t ${IMAGE_NAME}:${IMAGE_TAG} .
+        """
       }
     }
 
     stage('Login to ECR') {
       steps {
-        sh '''
-        aws ecr get-login-password --region $AWS_REGION \
-        | docker login --username AWS --password-stdin $ECR
-        '''
+        sh """
+          aws ecr get-login-password --region ${AWS_REGION} \
+          | docker login --username AWS --password-stdin ${ECR}
+        """
       }
     }
 
     stage('Tag & Push to ECR') {
       steps {
-        sh '''
-        docker tag $IMAGE_NAME:$BUILD_NUMBER \
-        $ECR/$IMAGE_NAME:$BUILD_NUMBER
+        sh """
+          docker tag ${IMAGE_NAME}:${IMAGE_TAG} \
+          ${ECR}/${IMAGE_NAME}:${IMAGE_TAG}
 
-        docker push $ECR/$IMAGE_NAME:$BUILD_NUMBER
-        '''
+          docker push ${ECR}/${IMAGE_NAME}:${IMAGE_TAG}
+        """
       }
     }
 
     stage('Remote Trivy Scan') {
       steps {
         sh """
-        ssh -o StrictHostKeyChecking=no ubuntu@${TRIVY_SERVER} '
+          ssh -o StrictHostKeyChecking=no ubuntu@${TRIVY_SERVER} "
+            aws ecr get-login-password --region ${AWS_REGION} | \
+            docker login --username AWS --password-stdin ${ECR} &&
 
-        aws ecr get-login-password --region ${AWS_REGION} | \
-        docker login --username AWS --password-stdin ${ECR} &&
+            docker pull ${ECR}/${IMAGE_NAME}:${IMAGE_TAG} &&
 
-        docker pull ${ECR}/${IMAGE_NAME}:${BUILD_NUMBER} &&
-
-        trivy image --exit-code 1 --severity HIGH,CRITICAL \
-        ${ECR}/${IMAGE_NAME}:${BUILD_NUMBER}
-
-        '
+            trivy image --exit-code 1 --severity HIGH,CRITICAL \
+            ${ECR}/${IMAGE_NAME}:${IMAGE_TAG}
+          "
         """
       }
     }
 
-   stage('Update Helm Repo (GitOps Trigger)') {
-    steps {
-      withCredentials([usernamePassword(
-        credentialsId: 'github-creds',
-        usernameVariable: 'GIT_USERNAME',
-        passwordVariable: 'GIT_TOKEN'
-      )]) {
-        sh '''
-        rm -rf ihms-deploy
-  
-        git clone https://${GIT_USERNAME}:${GIT_TOKEN}@github.com/bk-thakur/ihms-deploy.git
-        cd ihms-deploy/environments/dev
-  
-        sed -i "s/tag:.*/tag: ${BUILD_NUMBER}/" values.yaml
-  
-        git config user.email "ci@ihms.com"
-        git config user.name "ci-bot"
-  
-        git add values.yaml
-        git commit -m "Update image tag to ${BUILD_NUMBER}" || echo "No changes"
-        git push origin main
-        '''
+    stage('Update Helm Repo (GitOps Trigger)') {
+      steps {
+        withCredentials([usernamePassword(
+          credentialsId: 'github-creds',
+          usernameVariable: 'GIT_USERNAME',
+          passwordVariable: 'GIT_TOKEN'
+        )]) {
+          sh """
+            rm -rf ihms-deploy
+
+            git clone https://${GIT_USERNAME}:${GIT_TOKEN}@github.com/bk-thakur/ihms-deploy.git
+            cd ihms-deploy/environments/dev
+
+            sed -i "s/tag:.*/tag: ${IMAGE_TAG}/" values.yaml
+
+            git config user.email "ci@ihms.com"
+            git config user.name "ci-bot"
+
+            git add values.yaml
+            git commit -m "Update image tag to ${IMAGE_TAG}" || echo "No changes to commit"
+
+            git push origin main
+          """
+        }
       }
     }
- }
 
+  }
 
   post {
     success {
