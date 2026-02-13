@@ -94,23 +94,32 @@ pipeline {
       }
     }
 
-    stage('Update Helm Repo (GitOps Trigger)') {
-      steps {
+   stage('Update Helm Repo (GitOps Trigger)') {
+    steps {
+      withCredentials([usernamePassword(
+        credentialsId: 'github-creds',
+        usernameVariable: 'GIT_USERNAME',
+        passwordVariable: 'GIT_TOKEN'
+      )]) {
         sh '''
-        git clone https://github.com/bk-thakur/ihms-deploy.git
+        rm -rf ihms-deploy
+  
+        git clone https://${GIT_USERNAME}:${GIT_TOKEN}@github.com/bk-thakur/ihms-deploy.git
         cd ihms-deploy/environments/dev
-
-        sed -i "s/tag:.*/tag: $BUILD_NUMBER/" values.yaml
-
-        git config user.email "jenkins@ihms.com"
-        git config user.name "jenkins"
-
-        git commit -am "Updated image to $BUILD_NUMBER"
-        git push
+  
+        sed -i "s/tag:.*/tag: ${BUILD_NUMBER}/" values.yaml
+  
+        git config user.email "ci@ihms.com"
+        git config user.name "ci-bot"
+  
+        git add values.yaml
+        git commit -m "Update image tag to ${BUILD_NUMBER}" || echo "No changes"
+        git push origin main
         '''
       }
     }
-  }
+ }
+
 
   post {
     success {
