@@ -9,10 +9,6 @@ pipeline {
     SONAR_HOST = "http://172.31.13.153 :9000"
     TRIVY_SERVER = "172.31.13.153"
   }
-  tools {
-    sonarQubeScanner 'SonarScanner'
-  }
-
   stages {
 
     stage('Checkout') {
