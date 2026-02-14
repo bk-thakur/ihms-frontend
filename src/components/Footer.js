@@ -1,9 +1,9 @@
-import React from "react";
-
-export default function Footer() {
+function Footer() {
   return (
     <footer className="footer">
-      <p>© 2026 IHMS Hospital | HIPAA Compliant | 24/7 Support</p>
+      <p>© 2026 IHMS Hospital | Excellence in Care</p>
     </footer>
   );
 }
+
+export default Footer;
