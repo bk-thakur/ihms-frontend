@@ -1,11 +1,28 @@
-import React from "react";
+import hospital from "../assets/hospital.jpg";
 
-export default function Home() {
+function Home() {
   return (
-    <div className="container">
-      <h1>Welcome to IHMS Healthcare</h1>
-      <p>Managing patients, appointments, prescriptions and billing efficiently.</p>
-      <button className="btn">Book Appointment</button>
+    <div>
+      <section className="hero">
+        <img src={hospital} alt="Hospital" className="hero-img" />
+        <div className="hero-overlay">
+          <h1>Advanced Healthcare for a Better Tomorrow</h1>
+          <p>Trusted Doctors • 24/7 Emergency • Modern Technology</p>
+          <button className="btn-primary">Book Appointment</button>
+        </div>
+      </section>
+
+      <section className="features">
+        <h2>Our Specialities</h2>
+        <div className="card-container">
+          <div className="card">Cardiology</div>
+          <div className="card">Neurology</div>
+          <div className="card">Orthopedics</div>
+          <div className="card">Pediatrics</div>
+        </div>
+      </section>
     </div>
   );
 }
+
+export default Home;
