@@ -1,10 +1,8 @@
-import hospital from "../assets/hospital.jpg";
-
 function Home() {
   return (
     <div>
       <section className="hero">
-        <img src={hospital} alt="Hospital" className="hero-img" />
+        <img src="/images/hospital.jpg" alt="Hospital" className="hero-img" />
         <div className="hero-overlay">
           <h1>Advanced Healthcare for a Better Tomorrow</h1>
           <p>Trusted Doctors • 24/7 Emergency • Modern Technology</p>
