@@ -1,6 +1,10 @@
 pipeline {
   agent any
 
+   tools {
+    sonarRunner 'SonarScanner'
+  }
+
   environment {
     AWS_REGION = "ap-south-1"
     ACCOUNT_ID = "453183019852"
