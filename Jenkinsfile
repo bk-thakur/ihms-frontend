@@ -79,21 +79,19 @@ pipeline {
       }
     }
 
-    stage('Remote Trivy Scan') {
+    stage('Trivy Scan') {
       steps {
-        sh """
-          "
-            aws ecr get-login-password --region ${AWS_REGION} | \
-            docker login --username AWS --password-stdin ${ECR} &&
-
-            docker pull ${ECR}/${IMAGE_NAME}:${IMAGE_TAG} &&
-
-            trivy image --exit-code 1 --severity HIGH,CRITICAL \
-            ${ECR}/${IMAGE_NAME}:${IMAGE_TAG}
-          "
-        """
-      }
-    }
+        sh '''
+          aws ecr get-login-password --region ${AWS_REGION} \
+          | docker login --username AWS --password-stdin ${ECR}
+    
+          docker pull ${ECR}/${IMAGE_NAME}:${IMAGE_TAG}
+    
+          trivy image --exit-code 1 --severity HIGH,CRITICAL \
+          ${ECR}/${IMAGE_NAME}:${IMAGE_TAG}
+        '''
+  }
+}
 
     stage('Update Helm Repo (GitOps Trigger)') {
       steps {
