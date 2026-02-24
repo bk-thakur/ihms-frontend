@@ -35,7 +35,7 @@ pipeline {
       steps {
         withSonarQubeEnv('SonarQube-Server') {
           sh """
-            sonar-scanner \
+            /opt/sonar-scanner/bin/sonar-scanner \
             -Dsonar.projectKey=ihms-frontend \
             -Dsonar.sources=src
           """
