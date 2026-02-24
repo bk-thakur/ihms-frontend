@@ -3,11 +3,11 @@ pipeline {
 
   environment {
     AWS_REGION = "ap-south-1"
-    ACCOUNT_ID = "331760067638"
+    ACCOUNT_ID = "453183019852"
     IMAGE_NAME = "ihms-frontend"
     IMAGE_TAG  = "${BUILD_NUMBER}"
     ECR = "${ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
-    TRIVY_SERVER = "172.31.13.153"
+    TRIVY_SERVER = "65.0.80.190 "
   }
 
   stages {
