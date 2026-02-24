@@ -7,7 +7,7 @@ pipeline {
     IMAGE_NAME = "ihms-frontend"
     IMAGE_TAG  = "${BUILD_NUMBER}"
     ECR = "${ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
-    TRIVY_SERVER = "65.0.80.190 "
+    
   }
 
   stages {
@@ -82,7 +82,7 @@ pipeline {
     stage('Remote Trivy Scan') {
       steps {
         sh """
-          ssh -o StrictHostKeyChecking=no ubuntu@${TRIVY_SERVER} "
+          "
             aws ecr get-login-password --region ${AWS_REGION} | \
             docker login --username AWS --password-stdin ${ECR} &&
 
