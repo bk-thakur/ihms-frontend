@@ -7,7 +7,7 @@ pipeline {
     IMAGE_NAME = "ihms-frontend"
     IMAGE_TAG  = "${BUILD_NUMBER}"
     ECR = "${ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
-    
+    NEXUS_URL = "http://YOUR-SERVER-IP:8081/repository/frontend-artifacts"
   }
 
   stages {
@@ -28,6 +28,33 @@ pipeline {
     stage('Build Application') {
       steps {
         sh 'npm run build'
+      }
+    }
+
+    stage('Create Build Artifact') {
+      steps {
+        sh '''
+        zip -r build.zip build
+        '''
+      }
+    }
+
+    stage('Upload Artifact to Nexus') {
+      steps {
+
+        withCredentials([usernamePassword(
+          credentialsId: 'nexus-creds',
+          usernameVariable: 'NEXUS_USER',
+          passwordVariable: 'NEXUS_PASS'
+        )]) {
+
+          sh '''
+          curl -u $NEXUS_USER:$NEXUS_PASS \
+          --upload-file build.zip \
+          ${NEXUS_URL}/build-${BUILD_NUMBER}.zip
+          '''
+        }
+
       }
     }
 
@@ -84,14 +111,14 @@ pipeline {
         sh '''
           aws ecr get-login-password --region ${AWS_REGION} \
           | docker login --username AWS --password-stdin ${ECR}
-    
+
           docker pull ${ECR}/${IMAGE_NAME}:${IMAGE_TAG}
-    
+
           trivy image --exit-code 1 --severity HIGH,CRITICAL \
           ${ECR}/${IMAGE_NAME}:${IMAGE_TAG}
         '''
-  }
-}
+      }
+    }
 
     stage('Update Helm Repo (GitOps Trigger)') {
       steps {
@@ -100,6 +127,7 @@ pipeline {
           usernameVariable: 'GIT_USERNAME',
           passwordVariable: 'GIT_TOKEN'
         )]) {
+
           sh """
             rm -rf ihms-deploy
 
@@ -126,6 +154,7 @@ pipeline {
     success {
       echo "Pipeline completed successfully 🚀"
     }
+
     failure {
       echo "Pipeline failed due to quality or security issue ❌"
     }
