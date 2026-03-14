@@ -51,7 +51,7 @@ pipeline {
         --scan . \
         --format HTML \
         --out dependency-check-report
-        --data /opt/dependency-check/data \
+        --data /tmp/dc-data  \
         --nvdApiKey $NVD_API_KEY
         '''
       }
