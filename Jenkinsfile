@@ -19,6 +19,24 @@ pipeline {
       }
     }
 
+    stage('GitLeaks Secret Scan') {
+      steps {
+        sh '''
+        gitleaks detect \
+        --source . \
+        --exit-code 1 \
+        --report-format json \
+        --report-path gitleaks-report.json
+        '''
+      }
+    }
+
+    stage('Archive GitLeaks Report') {
+      steps {
+        archiveArtifacts artifacts: 'gitleaks-report.json', allowEmptyArchive: true
+      }
+    }
+
     stage('Install Dependencies') {
       steps {
         sh 'npm install'
@@ -152,11 +170,11 @@ pipeline {
 
   post {
     success {
-      echo "Pipeline completed successfully 🚀"
+      echo "Pipeline completed successfully "
     }
 
     failure {
-      echo "Pipeline failed due to quality or security issue ❌"
+      echo "Pipeline failed due to quality or security issue "
     }
   }
 }
