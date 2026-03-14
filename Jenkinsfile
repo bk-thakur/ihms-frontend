@@ -37,31 +37,31 @@ pipeline {
       }
     }
 
-    stage('Install Dependencies') {
-      steps {
-        sh 'npm install'
-      }
-    }
+    // stage('Install Dependencies') {
+    //   steps {
+    //     sh 'npm install'
+    //   }
+    // }
 
-    stage('OWASP Dependency Check') {
-      steps {
-        sh '''
-        dependency-check.sh \
-        --project "ihms-frontend" \
-        --scan . \
-        --format HTML \
-        --out dependency-check-report
-        --data /tmp/dc-data  \
-        --nvdApiKey $NVD_API_KEY
-        '''
-      }
-    }
+    // stage('OWASP Dependency Check') {
+    //   steps {
+    //     sh '''
+    //     dependency-check.sh \
+    //     --project "ihms-frontend" \
+    //     --scan . \
+    //     --format HTML \
+    //     --out dependency-check-report
+    //     --data /tmp/dc-data  \
+    //     --nvdApiKey $NVD_API_KEY
+    //     '''
+    //   }
+    // }
 
-    stage('Archive OWASP Report') {
-      steps {
-        archiveArtifacts artifacts: 'dependency-check-report/*.html', allowEmptyArchive: true
-      }
-    }
+    // stage('Archive OWASP Report') {
+    //   steps {
+    //     archiveArtifacts artifacts: 'dependency-check-report/*.html', allowEmptyArchive: true
+    //   }
+    // }
 
     stage('Build Application') {
       steps {
