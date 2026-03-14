@@ -87,7 +87,7 @@ pipeline {
         )]) {
 
           sh '''
-          curl -u $NEXUS_USER:$NEXUS_PASS \
+          curl -v -u $NEXUS_USER:$NEXUS_PASS \
           --upload-file build.zip \
           ${NEXUS_URL}/build-${BUILD_NUMBER}.zip
           '''
