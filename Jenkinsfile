@@ -7,7 +7,7 @@ pipeline {
     IMAGE_NAME = "ihms-frontend"
     IMAGE_TAG  = "${BUILD_NUMBER}"
     ECR = "${ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
-    NEXUS_URL = "http://172.31.42.146:8081/repository/frontend-artifacts"
+    NEXUS_URL = "http://172.31.15.97:8081/repository/ihms-repo"
   }
 
   stages {
