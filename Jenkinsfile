@@ -37,32 +37,7 @@ pipeline {
       }
     }
 
-    // stage('Install Dependencies') {
-    //   steps {
-    //     sh 'npm install'
-    //   }
-    // }
-
-    // stage('OWASP Dependency Check') {
-    //   steps {
-    //     sh '''
-    //     dependency-check.sh \
-    //     --project "ihms-frontend" \
-    //     --scan . \
-    //     --format HTML \
-    //     --out dependency-check-report
-    //     --data /tmp/dc-data  \
-    //     --nvdApiKey $NVD_API_KEY
-    //     '''
-    //   }
-    // }
-
-    // stage('Archive OWASP Report') {
-    //   steps {
-    //     archiveArtifacts artifacts: 'dependency-check-report/*.html', allowEmptyArchive: true
-    //   }
-    // }
-
+   
     stage('Build Application') {
       steps {
         sh 'npm run build'
@@ -157,36 +132,51 @@ pipeline {
         '''
       }
     }
-
-    stage('Update Helm Repo (GitOps Trigger)') {
-      steps {
-        withCredentials([usernamePassword(
-          credentialsId: 'github-creds',
-          usernameVariable: 'GIT_USERNAME',
-          passwordVariable: 'GIT_TOKEN'
-        )]) {
-
-          sh """
-            rm -rf ihms-deploy
-
-            git clone https://${GIT_USERNAME}:${GIT_TOKEN}@github.com/bk-thakur/ihms-deploy.git
-            cd ihms-deploy/environments/dev
-
-            sed -i "s/tag:.*/tag: ${IMAGE_TAG}/" values.yaml
-
-            git config user.email "ci@ihms.com"
-            git config user.name "ci-bot"
-
-            git add values.yaml
-            git commit -m "Update image tag to ${IMAGE_TAG}" || echo "No changes to commit"
-
-            git push origin main
-          """
-        }
-      }
+  stage('Deploy to EKS') {
+    steps {
+      sh """
+        aws eks update-kubeconfig \
+        --region ${AWS_REGION} \
+        --name ihms-cluster
+  
+        kubectl set image deployment/ihms-frontend \
+        ihms=${ECR}/${IMAGE_NAME}:${IMAGE_TAG} \
+        -n ihms
+  
+        kubectl rollout status deployment/ihms-frontend -n ihms
+      """
     }
-
   }
+
+  //   stage('Update Helm Repo (GitOps Trigger)') {
+  //     steps {
+  //       withCredentials([usernamePassword(
+  //         credentialsId: 'github-creds',
+  //         usernameVariable: 'GIT_USERNAME',
+  //         passwordVariable: 'GIT_TOKEN'
+  //       )]) {
+
+  //         sh """
+  //           rm -rf ihms-deploy
+
+  //           git clone https://${GIT_USERNAME}:${GIT_TOKEN}@github.com/bk-thakur/ihms-deploy.git
+  //           cd ihms-deploy/environments/dev
+
+  //           sed -i "s/tag:.*/tag: ${IMAGE_TAG}/" values.yaml
+
+  //           git config user.email "ci@ihms.com"
+  //           git config user.name "ci-bot"
+
+  //           git add values.yaml
+  //           git commit -m "Update image tag to ${IMAGE_TAG}" || echo "No changes to commit"
+
+  //           git push origin main
+  //         """
+  //       }
+  //     }
+  //   }
+
+  // }
 
   post {
     success {
